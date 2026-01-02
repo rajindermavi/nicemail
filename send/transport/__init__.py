@@ -1,3 +1,3 @@
-from .api import send
+from .send import send
 
-__all__ = ["api"]
+__all__ = ["send"]
