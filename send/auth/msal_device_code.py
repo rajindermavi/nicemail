@@ -1,7 +1,6 @@
-
 from __future__ import annotations
 
-from typing import Iterable, Any, Callable
+from typing import Any, Callable
 
 try:
     from tkinter import messagebox  # GUI popup for device-code instructions
@@ -15,7 +14,6 @@ from send.credentials.store import SecureConfig
 GRAPH_MAIL_SCOPES = ["https://graph.microsoft.com/Mail.Send"]
 ORG_AUTHORITY = "https://login.microsoftonline.com/organizations"
 CONSUMER_AUTHORITY = "https://login.microsoftonline.com/consumers"
-CLIENT_ID = ''
 
 class MSalDeviceCodeTokenProvider:
     """
@@ -24,15 +22,34 @@ class MSalDeviceCodeTokenProvider:
 
     TOKEN_CACHE_KEY = "ms_token_cache"
     MS_USERNAME_KEY = "ms_username"
+    CLIENT_ID_KEY = "client_id"
+    MSAL_CONFIG_KEY = "msal_config"
+    MS_AUTHORITY_KEY = "ms_authority"
 
-    def __init__(self, secure_config: SecureConfig | None = None, authority: str | None = None, show_message: Callable[[object], None] | None = None) -> None:
+    def __init__(
+        self,
+        secure_config: SecureConfig | None = None,
+        authority: str | None = None,
+        show_message: Callable[[object], None] | None = None,
+        client_id: str | None = None,
+    ) -> None:
         self.secure_config = secure_config
         self._show_message = show_message
+        self.ms_username: str | None = None
+        self.client_id: str | None = client_id
 
         self._cache = msal.SerializableTokenCache()
-        self._load_cache()
+        self._config_snapshot = self._load_cache()
 
-        self.authority = self.resolve_authority(authority)
+        self.client_id = self.client_id or self._extract_client_id(self._config_snapshot)
+        if not self.client_id:
+            raise ValueError(
+                "client_id is required for MSAL device code flow. "
+                "Provide it directly or store it in SecureConfig under 'client_id' or 'msal_config.client_id'."
+            )
+
+        authority_value = authority or self._extract_authority(self._config_snapshot)
+        self.authority = self.resolve_authority(authority_value)
 
         self._app = self._build_app()
 
@@ -51,7 +68,7 @@ class MSalDeviceCodeTokenProvider:
 
     def _build_app(self) -> msal.PublicClientApplication:
         return msal.PublicClientApplication(
-            client_id=CLIENT_ID,
+            client_id=self.client_id,
             authority=self.authority,
             token_cache=self._cache,
         )
@@ -63,17 +80,55 @@ class MSalDeviceCodeTokenProvider:
         self.authority = new_authority
         self._app = self._build_app()
 
-    def _load_cache(self) -> None:
-        if self.secure_config:
-            data = self.secure_config.load() or {}
-            self.ms_username = data.get(self.MS_USERNAME_KEY)
-            serialized_cache = data.get(self.TOKEN_CACHE_KEY)
-            if serialized_cache:
-                try:
-                    self._cache.deserialize(serialized_cache)
-                    return
-                except Exception:
-                    self._cache = msal.SerializableTokenCache()
+    def _load_cache(self) -> dict[str, Any]:
+        if not self.secure_config:
+            return {}
+
+        data = self.secure_config.load() or {}
+        self.ms_username = data.get(self.MS_USERNAME_KEY)
+        serialized_cache = data.get(self.TOKEN_CACHE_KEY)
+        if serialized_cache:
+            try:
+                self._cache.deserialize(serialized_cache)
+                return data
+            except Exception:
+                self._cache = msal.SerializableTokenCache()
+        return data
+
+    def _extract_client_id(self, data: dict[str, Any]) -> str | None:
+        """
+        Pull client_id from stored config, supporting both flat and nested layouts.
+        """
+        if not data:
+            return None
+
+        flat_value = data.get(self.CLIENT_ID_KEY)
+        if flat_value:
+            return str(flat_value)
+
+        msal_config = data.get(self.MSAL_CONFIG_KEY)
+        if isinstance(msal_config, dict):
+            nested_value = msal_config.get(self.CLIENT_ID_KEY)
+            if nested_value:
+                return str(nested_value)
+        return None
+
+    def _extract_authority(self, data: dict[str, Any]) -> str | None:
+        """
+        Pull authority preference from stored config, if available.
+        """
+        if not data:
+            return None
+        authority = data.get(self.MS_AUTHORITY_KEY)
+        if authority:
+            return str(authority)
+
+        msal_config = data.get(self.MSAL_CONFIG_KEY)
+        if isinstance(msal_config, dict):
+            nested = msal_config.get("authority")
+            if nested:
+                return str(nested)
+        return None
 
     def _save_cache_if_changed(self) -> None:
         if self._cache.has_state_changed:
@@ -81,6 +136,8 @@ class MSalDeviceCodeTokenProvider:
             if self.secure_config:
                 data = self.secure_config.load() or {}
                 data[self.TOKEN_CACHE_KEY] = serialized
+                if getattr(self, "client_id", None):
+                    data[self.CLIENT_ID_KEY] = self.client_id
                 # Also set a lightweight flag for UI display.
                 if getattr(self, "ms_username", None):
                     data[self.MS_USERNAME_KEY] = self.ms_username
