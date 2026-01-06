@@ -1,9 +1,14 @@
 from dataclasses import asdict, is_dataclass
+from email.message import EmailMessage
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping, get_args
+import warnings
 
+from send.auth import GoogleDeviceCodeTokenProvider, MSalDeviceCodeTokenProvider
 from send.credentials import GoogleAPIConfig, KeyPolicy, MSalConfig, SecureConfig
+from send.message.builder import EmailMessageBuilder
+from send.transport.send import send as dispatch_send
 
 from send.common.config import Backend
 
@@ -79,7 +84,9 @@ class EmailClient:
             raise ValueError("Missing required Google API config field: email_address")
 
         token_timestamp = self._parse_datetime(data.get("token_timestamp"))
-        port_value = data.get("port", GoogleAPIConfig.port)
+        port_value = data.get("port")
+        if port_value is None:
+            port_value = 443
 
         google_api_config = GoogleAPIConfig(
             email_address=str(email_address),
@@ -121,11 +128,109 @@ class EmailClient:
 
     def update_backend(self, backend: Backend | None = None) -> Backend | None:
         if backend is not None:
-            allowed_backends: set[str] = set(Backend)
+            allowed_backends: set[str] = set(get_args(Backend))
             if backend not in allowed_backends:
                 raise ValueError(f"Invalid backend: {backend}")
         self.backend = backend
         return backend
+
+    def device_code(
+        self,
+        *,
+        interactive: bool = True,
+        scopes: list[str] | None = None,
+        show_message: Callable[[object], None] | None = None,
+    ) -> str | None:
+        """Run the provider-specific device-code flow for the configured backend.
+
+        Returns the acquired access token (if any). Dry-run backends skip auth and
+        emit a warning instead of raising.
+        """
+        if not self.backend:
+            raise ValueError("Backend must be set before requesting device code.")
+
+        config_snapshot = self._store_config()
+
+        if self.backend == "dry_run":
+            warnings.warn(
+                "device_code skipped for dry_run backend; no authentication required.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return None
+
+        if self.backend == "ms_graph":
+            provider = MSalDeviceCodeTokenProvider(
+                secure_config=self.secure_config,
+                authority=self.msal_config.authority if self.msal_config else None,
+                show_message=show_message,
+                client_id=self.msal_config.client_id if self.msal_config else None,
+            )
+            return provider.acquire_token(interactive=interactive, scopes=scopes)
+
+        if self.backend == "google_api":
+            google_scopes = scopes or (self.google_api_config.scopes if self.google_api_config else None)
+            google_client_id = self.google_api_config.client_id if self.google_api_config else None
+            google_client_secret = None
+            google_cfg = config_snapshot.get("google_api_config") if isinstance(config_snapshot, dict) else None
+            if not google_client_id and isinstance(config_snapshot, dict):
+                google_client_id = config_snapshot.get("google_client_id") or config_snapshot.get("client_id")
+            if isinstance(config_snapshot, dict):
+                google_client_secret = config_snapshot.get("google_client_secret")
+                if not google_client_secret and isinstance(google_cfg, dict):
+                    google_client_secret = google_cfg.get("client_secret")
+
+            provider = GoogleDeviceCodeTokenProvider(
+                secure_config=self.secure_config,
+                client_id=google_client_id,
+                client_secret=google_client_secret,
+                scopes=google_scopes,
+                show_message=show_message,
+            )
+            return provider.acquire_token(interactive=interactive, scopes=google_scopes)
+
+        raise ValueError(f"Unsupported backend: {self.backend}")
+
+    def message(
+        self,
+        *,
+        to: Any,
+        cc: Any | None = None,
+        bcc: Any | None = None,
+        subject: str | None = None,
+        body_text: str | None = None,
+        body_html: str | None = None,
+        attachments: list[str | Path] | None = None,
+        from_address: str | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> EmailMessage:
+        """Build an EmailMessage using EmailMessageBuilder with sensible defaults."""
+        builder = EmailMessageBuilder()
+
+        from_value = from_address or self._infer_from_address()
+        if not from_value:
+            raise ValueError("from_address is required when no configured email is available.")
+
+        builder.set_from(from_value)
+        builder.add_to(to)
+        if cc:
+            builder.add_cc(cc)
+        if bcc:
+            builder.add_bcc(bcc)
+        if subject is not None:
+            builder.set_subject(subject)
+        if body_text is not None:
+            builder.set_text_body(body_text)
+        if body_html is not None:
+            builder.set_html_body(body_html)
+
+        for attachment in attachments or []:
+            builder.add_attachment(attachment)
+
+        for name, value in (headers or {}).items():
+            builder.add_header(name, value)
+
+        return builder.build()
 
     def _parse_datetime(self, value: Any) -> datetime | None:
         if value is None:
@@ -215,13 +320,66 @@ class EmailClient:
         self.secure_config.save(merged)
         return merged
 
+    def _infer_from_address(self) -> str | None:
+        if self.backend == "ms_graph" and self.msal_config:
+            return self.msal_config.email_address
+        if self.backend == "google_api" and self.google_api_config:
+            return self.google_api_config.email_address
+        if self.msal_config:
+            return self.msal_config.email_address
+        if self.google_api_config:
+            return self.google_api_config.email_address
+        return None
+
     def send(
         self,
-        to: list[str],
-        subject: str,
+        to: Any,
+        subject: str | None = None,
         body_html: str | None = None,
         body_text: str | None = None,
-        attachments: list[Path] | None = None,
-    ):
-        attachments = attachments or []
-        pass
+        attachments: list[str | Path] | None = None,
+        *,
+        cc: Any | None = None,
+        bcc: Any | None = None,
+        from_address: str | None = None,
+        headers: Mapping[str, str] | None = None,
+        interactive: bool = True,
+        scopes: list[str] | None = None,
+        show_message: Callable[[object], None] | None = None,
+        write_metadata: bool = True,
+    ) -> EmailMessage:
+        """Build and send an EmailMessage via the configured backend."""
+        if not self.backend:
+            raise ValueError("Backend must be set before sending email.")
+
+        message = self.message(
+            to=to,
+            cc=cc,
+            bcc=bcc,
+            subject=subject,
+            body_text=body_text,
+            body_html=body_html,
+            attachments=attachments,
+            from_address=from_address,
+            headers=headers,
+        )
+
+        cfg = self._store_config()
+
+        # Acquire tokens (no-op + warning for dry_run).
+        self.device_code(
+            interactive=interactive,
+            scopes=scopes,
+            show_message=show_message,
+        )
+
+        dispatch_send(
+            cfg,
+            message,
+            self.backend,
+            interactive=interactive,
+            secure_config=self.secure_config,
+            write_metadata=write_metadata,
+        )
+
+        return message

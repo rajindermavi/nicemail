@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- EmailClient.send now builds messages, persists config, runs device-code auth, and dispatches via transports.
+- Added EmailClient.message() helper that builds EmailMessage instances via EmailMessageBuilder with sensible defaults.
+- Added EmailClient.device_code() to trigger provider-specific device flows and warn when using the dry_run backend.
 - Added Google device-code token provider with SecureConfig persistence and supporting tests.
 - Implemented GoogleTransport for Gmail API sends; dispatcher now routes ms_graph, google_api, and dry_run backends.
 - Renamed GraphMailClient to MSGraphTransport with backward-compatible send_message alias.

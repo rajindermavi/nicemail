@@ -74,6 +74,13 @@ conforms to RFC expectations for multipart emails.
 - Ensure headers are set consistently
 - Produce a final `EmailMessage` instance
 
+### EmailClient helper
+
+`EmailClient.message(...)` is a small convenience wrapper around `EmailMessageBuilder`.
+It picks a default From address from the configured backend (or uses the provided
+`from_address`), applies recipients/subject/bodies/attachments, and returns a ready
+`EmailMessage`.
+
 ### Non-Responsibilities
 
 - No retries

@@ -161,3 +161,17 @@ class GoogleDeviceCodeTokenProvider:
 - auth/ is small, explicit, and provider-specific
 - Device-code flows are first-class
 - Token acquisition has a single clear entry point
+
+---
+
+## EmailClient helper
+
+`EmailClient.device_code()` runs the provider-specific device-code flow for the
+currently configured backend:
+
+- `ms_graph` → uses MSAL device code
+- `google_api` → uses Google device authorization
+- `dry_run` → no auth required; emits a warning instead of raising
+
+Pass `show_message` to surface device-code instructions in your UI and `scopes`
+to override provider defaults.

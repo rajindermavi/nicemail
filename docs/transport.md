@@ -64,6 +64,10 @@ send(cfg: dict, msg: EmailMessage, backend: Backend) -> None
 - Delegates to transport.send_email
 - Does not implement retries, logging policy, or validation
 
+EmailClient.send() wraps this dispatcher: it builds the EmailMessage via
+EmailMessageBuilder, persists config using the configured KeyPolicy/SecureConfig,
+runs device-code auth for non-dry-run backends, and then calls this send() helper.
+
 ## Errors
 
 send_email raises a TransportError (or subclass) if delivery fails.
