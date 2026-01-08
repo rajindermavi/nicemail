@@ -150,7 +150,7 @@ class SecureConfig:
             passphrase_bytes = passphrase.encode("utf-8")
         else:
             passphrase_bytes = passphrase
-        salt = b"SEND_SECURECONFIG_V1"
+        salt = b"NICEMAIL_SECURECONFIG_V1"
         derived = hashlib.pbkdf2_hmac(
             "sha256",
             passphrase_bytes,
