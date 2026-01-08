@@ -11,7 +11,7 @@ from platformdirs import (
     user_runtime_dir,
 )
 
-from .context import RuntimeContext
+from .context import APP_NAME, RuntimeContext
 
 
 @dataclass(frozen=True)
@@ -57,4 +57,4 @@ def resolve_paths(ctx: RuntimeContext) -> AppPaths:
 
 
 def resolve_dry_run_out_dir() -> Path:
-    return Path(user_runtime_dir("send")) / "dry_run"
+    return Path(user_runtime_dir(APP_NAME)) / "dry_run"

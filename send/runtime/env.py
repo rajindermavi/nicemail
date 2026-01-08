@@ -1,4 +1,4 @@
-# src/outbox/runtime/env.py
+# src/nicemail/runtime/env.py
 from __future__ import annotations
 
 from enum import Enum
@@ -22,4 +22,3 @@ class Environment(str, Enum):
         if v in {"test", "testing"}:
             return cls.TEST
         return None
-

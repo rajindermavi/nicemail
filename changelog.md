@@ -1,10 +1,12 @@
 # Changelog
 
 ## Unreleased
+- Aligned runtime identity defaults (app name, env vars, platformdirs namespaces) with nicemail.
+- Added the nicemail public facade package that re-exports EmailClient and updated packaging metadata.
 - EmailClient.send now builds messages, persists config, runs device-code auth, and dispatches via transports.
 - Added EmailClient.message() helper that builds EmailMessage instances via EmailMessageBuilder with sensible defaults.
 - Added EmailClient.device_code() to trigger provider-specific device flows and warn when using the dry_run backend.
-- Dry-run sends now default to platformdirs.user_runtime_dir("send")/dry_run via EmailClient, with explicit out_dir required by the dispatcher.
+- Dry-run sends now default to platformdirs.user_runtime_dir("nicemail")/dry_run via EmailClient, with explicit out_dir required by the dispatcher.
 - SecureConfig now enables passphrase fallback when keyring is unavailable, with a one-time warning.
 - EmailClient now acquires access tokens once per send and transports consume the provided token without re-authenticating.
 - Added Google device-code token provider with SecureConfig persistence and supporting tests.

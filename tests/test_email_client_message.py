@@ -4,7 +4,7 @@ from send.client import EmailClient
 
 
 def test_message_uses_configured_from_and_builder(monkeypatch, tmp_path):
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
 
     client = EmailClient(
         msal_config={
@@ -34,7 +34,7 @@ def test_message_uses_configured_from_and_builder(monkeypatch, tmp_path):
 
 
 def test_message_allows_override_from_and_attachments(monkeypatch, tmp_path):
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
 
     attachment_path = tmp_path / "sample.txt"
     attachment_path.write_text("sample", encoding="utf-8")
@@ -61,7 +61,7 @@ def test_message_allows_override_from_and_attachments(monkeypatch, tmp_path):
 
 
 def test_message_requires_from(monkeypatch, tmp_path):
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
 
     client = EmailClient(
         backend="dry_run",

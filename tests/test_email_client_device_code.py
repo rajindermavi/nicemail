@@ -16,7 +16,7 @@ class DummySecureConfig:
 
 def test_device_code_routes_to_msal(monkeypatch, tmp_path):
     captured: dict = {}
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
 
     def fake_show(msg):
         captured["show_called"] = True
@@ -61,7 +61,7 @@ def test_device_code_routes_to_msal(monkeypatch, tmp_path):
 
 def test_device_code_routes_to_google(monkeypatch, tmp_path):
     captured: dict = {}
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
 
     class FakeProvider:
         def __init__(
@@ -114,7 +114,7 @@ def test_device_code_routes_to_google(monkeypatch, tmp_path):
 
 
 def test_device_code_warns_for_dry_run(monkeypatch, tmp_path):
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
     client = EmailClient(
         backend="dry_run",
         key_policy={"prefer_keyring": False, "allow_passphrase_fallback": True},

@@ -19,7 +19,7 @@ class DummySecureConfig:
 
 
 def test_send_runs_device_code_and_dispatch(monkeypatch, tmp_path):
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
 
     client = EmailClient(
         msal_config={
@@ -81,7 +81,7 @@ def test_send_runs_device_code_and_dispatch(monkeypatch, tmp_path):
 
 
 def test_send_dry_run_supports_custom_from(monkeypatch, tmp_path):
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
 
     client = EmailClient(
         backend="dry_run",
@@ -125,7 +125,7 @@ def test_send_dry_run_supports_custom_from(monkeypatch, tmp_path):
 def test_send_dry_run_writes_eml_and_metadata(monkeypatch, tmp_path):
     runtime_dir = tmp_path / "runtime"
     runtime_dir.mkdir()
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
     monkeypatch.setattr(
         "send.runtime.paths.user_runtime_dir",
         lambda *args, **kwargs: str(runtime_dir),

@@ -2,7 +2,7 @@ from send.client import EmailClient
 
 
 def test_email_client_initialization_with_configs(tmp_path, monkeypatch):
-    monkeypatch.setenv("OUTBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("NICEMAIL_DIR", str(tmp_path))
 
     client = EmailClient(
         msal_config={

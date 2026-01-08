@@ -39,7 +39,7 @@ A no-op transport used for testing, debugging, and previewing sends.
 - Performs no network calls
 - Does not mutate the EmailMessage
 - Logs or records send intent only
-- EmailClient defaults output to platformdirs.user_runtime_dir("send") / "dry_run"
+- EmailClient defaults output to platformdirs.user_runtime_dir("nicemail") / "dry_run"
 
 ## ms_graph_transport.py
 

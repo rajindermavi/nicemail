@@ -15,4 +15,4 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["send*"]
+include = ["send*", "nicemail*"]

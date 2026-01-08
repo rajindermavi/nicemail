@@ -7,10 +7,15 @@ from typing import Optional
 
 from .env import Environment
 
+APP_NAME = "nicemail"
+ENV_VAR = "NICEMAIL_ENV"
+PROFILE_VAR = "NICEMAIL_PROFILE"
+ROOT_VAR = "NICEMAIL_DIR"
+
 
 @dataclass(frozen=True)
 class RuntimeContext:
-    app_name: str = "Outbox"
+    app_name: str = APP_NAME
     env: Environment = Environment.PRODUCTION
 
     # Optional: isolate multiple independent configurations (per client/mailbox)
@@ -20,20 +25,20 @@ class RuntimeContext:
     root_override: Optional[Path] = None
 
     # Env var names (host can change if desired)
-    env_var: str = "OUTBOX_ENV"
-    profile_var: str = "OUTBOX_PROFILE"
-    root_var: str = "OUTBOX_DIR"
+    env_var: str = ENV_VAR
+    profile_var: str = PROFILE_VAR
+    root_var: str = ROOT_VAR
 
 
 def get_runtime_context(
     *,
-    app_name: str = "Outbox",
+    app_name: str = APP_NAME,
     env: Environment | str | None = None,
     profile: str | None = None,
     root_override: Path | None = None,
-    env_var: str = "OUTBOX_ENV",
-    profile_var: str = "OUTBOX_PROFILE",
-    root_var: str = "OUTBOX_DIR",
+    env_var: str = ENV_VAR,
+    profile_var: str = PROFILE_VAR,
+    root_var: str = ROOT_VAR,
 ) -> RuntimeContext:
     resolved_env = env if isinstance(env, Environment) else Environment.parse(env)  # type: ignore[arg-type]
     if resolved_env is None:

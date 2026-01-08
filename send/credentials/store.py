@@ -12,11 +12,10 @@ from cryptography.fernet import Fernet
 
 from send.credentials.models import KeyPolicy
 from send.credentials.paths import get_encrypted_config_path
-from send.runtime.context import get_runtime_context
+from send.runtime.context import APP_NAME, get_runtime_context
 from send.runtime.paths import AppPaths, resolve_paths
 
-LIB_NAME = "SEND"
-KEYRING_SERVICE = LIB_NAME
+KEYRING_SERVICE = APP_NAME
 KEYRING_USERNAME = "config_key"
 
 class SecureConfig:
@@ -40,7 +39,7 @@ class SecureConfig:
             if not self._keyring_available:
                 self._enable_passphrase_fallback(keyring_reason)
 
-        self._paths = (paths or resolve_paths(get_runtime_context(app_name=LIB_NAME))).ensure()
+        self._paths = (paths or resolve_paths(get_runtime_context(app_name=APP_NAME))).ensure()
         self._config_path = get_encrypted_config_path(self._paths)
 
         self._log(f"Config path: {self._config_path}")
