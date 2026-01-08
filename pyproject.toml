@@ -12,6 +12,9 @@ dependencies = [
     "requests>=2.32.5",
 ]
 
+[project.scripts]
+nicemail = "send.cli:main"
+
 
 [tool.setuptools.packages.find]
 where = ["."]

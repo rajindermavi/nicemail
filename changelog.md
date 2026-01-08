@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Aligned runtime identity defaults (app name, env vars, platformdirs namespaces) with nicemail.
+- Added a minimal nicemail CLI plus example scripts for dry-run and MS Graph sends.
 - Added the nicemail public facade package that re-exports EmailClient and updated packaging metadata.
 - EmailClient.send now builds messages, persists config, runs device-code auth, and dispatches via transports.
 - Added EmailClient.message() helper that builds EmailMessage instances via EmailMessageBuilder with sensible defaults.
