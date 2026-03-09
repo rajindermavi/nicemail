@@ -7,6 +7,7 @@ from typing import Dict
 
 import requests
 
+from send.common.errors import TransportError
 from send.common.logging import get_logger
 
 logger = get_logger(__name__)
@@ -46,7 +47,7 @@ class GoogleTransport:
         )
 
         if resp.status_code not in (200, 202):
-            raise RuntimeError(f"Gmail send failed: {resp.status_code} {resp.text}")
+            raise TransportError(f"Gmail send failed: {resp.status_code} {resp.text}")
 
     def _clone_message(self, msg: EmailMessage) -> EmailMessage:
         parser = BytesParser(policy=msg.policy)

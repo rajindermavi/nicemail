@@ -7,6 +7,7 @@ from typing import Dict
 from email.message import EmailMessage
 from email.utils import getaddresses
 
+from send.common.errors import TransportError
 from send.common.logging import get_logger
 
 logger = get_logger(__name__)
@@ -35,7 +36,7 @@ class MSGraphTransport:
         )
 
         if resp.status_code not in (200, 202):
-            raise RuntimeError(
+            raise TransportError(
                 f"Graph sendMail failed: {resp.status_code} {resp.text}"
             )
 
