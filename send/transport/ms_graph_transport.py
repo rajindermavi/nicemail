@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import requests
 import base64
 from typing import Dict
@@ -25,7 +24,7 @@ class MSGraphTransport:
         }
 
     def send_email(self, msg: EmailMessage) -> None:
-        logger.info(f'Start. Class: {self.__class__.__name__}. Method: {inspect.currentframe().f_code.co_name}.')
+        logger.info('Start. Class: MSGraphTransport. Method: send_email.')
         payload = self._emailmessage_to_graph_payload(msg)
 
         resp = requests.post(
