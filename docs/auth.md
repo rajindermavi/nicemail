@@ -42,7 +42,7 @@ auth/
 ├── __init__.py
 ├── auth.md
 ├── msal_device_code.py
-└── google_api_device_code.py
+└── google_device_code.py
 
 
 ---
