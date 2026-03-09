@@ -59,7 +59,7 @@ A no-op transport used for testing, debugging, and previewing sends.
 
 Provides a thin dispatch layer over available transports.
 
-send(cfg: dict, msg: EmailMessage, backend: Backend, *, out_dir: Path | None = None, access_token: str | None = None) -> None
+send(cfg: dict, msg: EmailMessage, backend: Backend, *, out_dir: Path | None = None, access_token: str | None = None, write_metadata: bool = True) -> None
 
 - Selects the appropriate transport based on backend
 - Constructs the transport using cfg

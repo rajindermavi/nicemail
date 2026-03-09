@@ -14,7 +14,7 @@ def send(
     *,
     out_dir: Path | str | None = None,
     access_token: str | None = None,
-    **kw,
+    write_metadata: bool = True,
 ) -> None:
     if backend == "ms_graph":
         with MSGraphTransport.connect_with_oauth(cfg, access_token=access_token) as transport:
@@ -26,7 +26,7 @@ def send(
         if out_dir is None:
             raise ValueError("dry_run backend requires 'out_dir'.")
         out_path = Path(out_dir)
-        with DryRunTransport(out_path, write_metadata=kw.get("write_metadata", True)) as transport:
+        with DryRunTransport(out_path, write_metadata=write_metadata) as transport:
             transport.send_email(msg)
     else:
         raise ValueError(f"Unknown backend: {backend}")
