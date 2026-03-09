@@ -49,10 +49,6 @@ class GoogleTransport:
         if resp.status_code not in (200, 202):
             raise TransportError(f"Gmail send failed: {resp.status_code} {resp.text}")
 
-    def _clone_message(self, msg: EmailMessage) -> EmailMessage:
-        parser = BytesParser(policy=msg.policy)
-        return parser.parsebytes(msg.as_bytes())
-
     @classmethod
     def connect_with_oauth(
         cls,
