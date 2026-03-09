@@ -7,7 +7,7 @@ from typing import Dict
 from email.message import EmailMessage
 from email.utils import getaddresses
 
-from send.logging import get_logger
+from send.common.logging import get_logger
 
 logger = get_logger(__name__)
 

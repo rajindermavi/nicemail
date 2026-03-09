@@ -7,7 +7,7 @@ from typing import Dict
 
 import requests
 
-from send.logging import get_logger
+from send.common.logging import get_logger
 
 logger = get_logger(__name__)
 

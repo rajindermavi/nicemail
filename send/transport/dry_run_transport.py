@@ -7,7 +7,7 @@ from pathlib import Path
 from email.message import EmailMessage
 from typing import Iterable
 
-from send.logging import get_logger
+from send.common.logging import get_logger
 
 logger = get_logger(__name__)
 
