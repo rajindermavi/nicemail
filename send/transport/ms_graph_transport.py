@@ -99,10 +99,16 @@ class MSGraphTransport:
             graph_type = "HTML" if content_type == "text/html" else "Text"
             return content or "", graph_type
 
-        to_addrs = []
-        for _, addr in getaddresses(msg.get_all("To") or []):
-            if addr:
-                to_addrs.append({"emailAddress": {"address": addr}})
+        def _extract_addrs(header: str) -> list[dict]:
+            return [
+                {"emailAddress": {"address": addr}}
+                for _, addr in getaddresses(msg.get_all(header) or [])
+                if addr
+            ]
+
+        to_addrs = _extract_addrs("To")
+        cc_addrs = _extract_addrs("Cc")
+        bcc_addrs = _extract_addrs("Bcc")
 
         body_text, body_type = _body_content(msg)
 
@@ -119,6 +125,11 @@ class MSGraphTransport:
                 "toRecipients": to_addrs,
             }
         }
+
+        if cc_addrs:
+            payload["message"]["ccRecipients"] = cc_addrs
+        if bcc_addrs:
+            payload["message"]["bccRecipients"] = bcc_addrs
 
         # Attachments (optional, but important for InvoiceMailer)
         attachments = []

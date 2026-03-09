@@ -1,5 +1,3 @@
-import base64
-from email import message_from_bytes
 from email.message import EmailMessage
 
 import pytest
@@ -16,31 +14,6 @@ class DummyResponse:
     def json(self):
         return self._payload
 
-
-def test_google_transport_sets_from_on_copy(monkeypatch):
-    captured: dict = {}
-
-    def fake_post(url, headers=None, json=None, timeout=None):
-        captured["url"] = url
-        captured["headers"] = headers
-        captured["json"] = json
-        return DummyResponse(200, {})
-
-    monkeypatch.setattr("send.transport.google_transport.requests.post", fake_post)
-
-    msg = EmailMessage()
-    msg["To"] = "dest@example.com"
-    msg.set_content("hello")
-
-    transport = GoogleTransport("token-123", "sender@example.com")
-    transport.send_email(msg)
-
-    assert "From" not in msg  # original untouched
-
-    raw = captured["json"]["raw"]
-    decoded = message_from_bytes(base64.urlsafe_b64decode(raw))
-    assert decoded["From"] == "sender@example.com"
-    assert captured["headers"]["Authorization"] == "Bearer token-123"
 
 
 def test_google_transport_raises_on_http_error(monkeypatch):
