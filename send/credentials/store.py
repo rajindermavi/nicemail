@@ -10,10 +10,11 @@ from typing import Any
 
 from cryptography.fernet import Fernet
 
-from send.credentials.models import KeyPolicy
-from send.credentials.paths import get_encrypted_config_path
+from send.common.models import KeyPolicy
+from send.common.paths import get_encrypted_config_path
 from send.runtime.context import APP_NAME, get_runtime_context
-from send.runtime.paths import AppPaths, resolve_paths
+from send.common.paths import AppPaths
+from send.runtime.paths import resolve_paths
 
 KEYRING_SERVICE = APP_NAME
 KEYRING_USERNAME = "config_key"

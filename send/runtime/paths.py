@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
 from platformdirs import (
@@ -12,19 +11,7 @@ from platformdirs import (
 )
 
 from .context import APP_NAME, RuntimeContext
-
-
-@dataclass(frozen=True)
-class AppPaths:
-    config_dir: Path   # encrypted config files
-    state_dir: Path    # token caches, durable state, keys
-    cache_dir: Path    # ephemeral cache
-    logs_dir: Path     # logs
-
-    def ensure(self) -> "AppPaths":
-        for d in (self.config_dir, self.state_dir, self.cache_dir, self.logs_dir):
-            d.mkdir(parents=True, exist_ok=True)
-        return self
+from send.common.paths import AppPaths
 
 
 def resolve_paths(ctx: RuntimeContext) -> AppPaths:

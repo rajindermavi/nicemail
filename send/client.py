@@ -6,7 +6,8 @@ from typing import Any, Callable, Mapping, get_args
 import warnings
 
 from send.auth import GoogleDeviceCodeTokenProvider, MSalDeviceCodeTokenProvider
-from send.credentials import GoogleAPIConfig, KeyPolicy, MSalConfig, SecureConfig
+from send.common.models import GoogleAPIConfig, KeyPolicy, MSalConfig
+from send.credentials import SecureConfig
 from send.message.builder import EmailMessageBuilder
 from send.runtime.paths import resolve_dry_run_out_dir
 from send.transport.send import send as dispatch_send
