@@ -39,10 +39,6 @@ class MSGraphTransport:
                 f"Graph sendMail failed: {resp.status_code} {resp.text}"
             )
 
-    def send_message(self, msg: EmailMessage) -> None:
-        # Backward compatibility alias.
-        self.send_email(msg)
-
     def __enter__(self) -> "MSGraphTransport":
         return self
 
