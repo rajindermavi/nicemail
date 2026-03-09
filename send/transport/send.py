@@ -17,14 +17,16 @@ def send(
     **kw,
 ) -> None:
     if backend == "ms_graph":
-        MSGraphTransport.send_email_from_config(cfg, msg, access_token=access_token)
+        with MSGraphTransport.connect_with_oauth(cfg, access_token=access_token) as transport:
+            transport.send_email(msg)
     elif backend == "google_api":
-        GoogleTransport.send_email_from_config(cfg, msg, access_token=access_token)
+        with GoogleTransport.connect_with_oauth(cfg, access_token=access_token) as transport:
+            transport.send_email(msg)
     elif backend == "dry_run":
         if out_dir is None:
             raise ValueError("dry_run backend requires 'out_dir'.")
         out_path = Path(out_dir)
-        transport = DryRunTransport(out_path, write_metadata=kw.get("write_metadata", True))
-        transport.send_email_from_config(msg, **kw)
+        with DryRunTransport(out_path, write_metadata=kw.get("write_metadata", True)) as transport:
+            transport.send_email(msg)
     else:
         raise ValueError(f"Unknown backend: {backend}")

@@ -46,7 +46,7 @@ class MSGraphTransport:
     def __enter__(self) -> "MSGraphTransport":
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(self, *_) -> None:
         # nothing to close (HTTP)
         return None
 
@@ -80,33 +80,6 @@ class MSGraphTransport:
             access_token=access_token,
             from_address=from_address,
         )
-
-    @classmethod
-    def send_email_from_config(
-        cls,
-        cfg: Dict,
-        msg: EmailMessage,
-        *,
-        access_token: str | None = None,
-    ) -> None:
-        """
-        Convenience wrapper:
-        - Connects via Microsoft Graph
-        - Sends a single EmailMessage
-        - Cleans up
-
-        `msg["From"]` will be set to cfg["ms_email_address"] if not already set.
-        """
-        if "ms_token" in cfg:
-            cfg = cfg.get("ms_token") or {}
-        if not cfg:
-            raise ValueError("Missing ms_token configuration for MS Graph send.")
-
-        with cls.connect_with_oauth(
-            cfg,
-            access_token=access_token,
-        ) as graph:
-            graph.send_email(msg)
 
     def _emailmessage_to_graph_payload(self, msg: EmailMessage) -> Dict:
         def _body_content(msg: EmailMessage) -> tuple[str, str]:

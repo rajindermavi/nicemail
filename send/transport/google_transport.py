@@ -26,6 +26,12 @@ class GoogleTransport:
         self._host = host or self.DEFAULT_HOST
         self._send_url = f"https://{self._host}{self.SEND_PATH}"
 
+    def __enter__(self) -> "GoogleTransport":
+        return self
+
+    def __exit__(self, *_) -> None:
+        return None
+
     def send_email(self, msg: EmailMessage) -> None:
         prepared = self._ensure_from(msg)
         raw_message = base64.urlsafe_b64encode(prepared.as_bytes()).decode("ascii")
@@ -79,23 +85,6 @@ class GoogleTransport:
             from_address=email_address,
             host=host,
         )
-
-    @classmethod
-    def send_email_from_config(
-        cls,
-        cfg: Dict,
-        msg: EmailMessage,
-        *,
-        access_token: str | None = None,
-    ) -> None:
-        if not cfg:
-            raise ValueError("Missing configuration for Google API send.")
-
-        transport = cls.connect_with_oauth(
-            cfg,
-            access_token=access_token,
-        )
-        transport.send_email(msg)
 
     @staticmethod
     def _extract_email(cfg: Dict, google_cfg: dict | None) -> str | None:
