@@ -70,16 +70,6 @@ The following **must not** live in `common/`:
 
 ---
 
-## Dependency Direction
-
-Dependencies must flow **outward**, never inward:
-
-
-- `common/` may not depend on any other internal package
-- Other packages may freely depend on `common/`
-
----
-
 ## Naming Guidance
 
 Prefer **descriptive module names** over generic ones:

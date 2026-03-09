@@ -50,8 +50,3 @@ tests/
   test_dry_run_transport.py
   test_client_send_flow.py
 
-## Rule of Thumb
-
-If a test requires internet access, it is invalid.
-If a test requires a real email account, it is invalid.
-If a test breaks when refactoring internals, it is invalid.

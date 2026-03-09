@@ -75,32 +75,11 @@ class MSalDeviceCodeTokenProvider:
     """
 ```
 
-### Public API
-
-```
-def acquire_token(self) -> str
-```
-
-This is the only required entry point.
-- Starts device-code authentication if no valid token exists
-- Refreshes token if expired
-- Returns a raw access token string
-- Raises on unrecoverable auth failure
-
-**Expected Behavior**
-- Uses msal.SerializableTokenCache
+- Uses `msal.SerializableTokenCache`
 - Token cache loading/saving is injected (not hard-coded)
-- Supports:
-    - /common
-    - /organizations
-    - /consumers
-- May optionally display the device-code message via callback
-
-```
-show_message: Callable[[object], None] | None
-```
-
-The auth layer **does not assume a UI.**
+- Supports `/common`, `/organizations`, `/consumers` authority endpoints
+- Optionally displays the device-code message via a `show_message` callback
+- The auth layer does not assume a UI
 
 ```google_api_device_code.py```
 
@@ -124,21 +103,10 @@ class GoogleDeviceCodeTokenProvider:
     """
 ```
 
-**Public API**
-
-```def acquire_token(self) -> str```
-
-- Initiates device-code authorization if needed
-- Refreshes token when possible
-- Returns a valid access token
-- Raises on failure
-
----
-
 **Notes**
 - Uses Google OAuth client libraries
 - Token persistence is injected
-- Scope selection is explicit (e.g. gmail.send)
+- Scope selection is explicit (e.g. `gmail.send`)
 - No attempt is made to unify MS and Google auth flows
 
 ## Design Principles

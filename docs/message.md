@@ -26,22 +26,6 @@ every possible email use case.
 
 ---
 
-## Public Contract
-
-The output of this module is always:
-
-email.message.EmailMessage
-
-
-Transports assume the message is:
-- Complete
-- Valid
-- Ready to send
-
-No transport should modify message contents.
-
----
-
 ## Files
 
 ### `builder.py`
@@ -147,11 +131,3 @@ client/         → orchestration and user-facing API
 This strict layering keeps responsibilities clear and testable.
 
 
----
-
-If you want, next good steps would be:
-- Sketch `EmailMessageBuilder`’s **method surface** explicitly
-- Decide whether attachments accept paths, bytes, or file-like objects
-- Decide where address validation lives (builder vs helper)
-
-But structurally, this `message.md` is exactly the right level of specificity.

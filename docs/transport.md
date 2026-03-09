@@ -16,21 +16,6 @@ It does not construct email content or manage credentials directly.
 - Use caller-provided authentication tokens
 - Raise exceptions on failure
 
-## Contract
-
-All transports expose:
-
-    send_email(msg: EmailMessage) -> None
-
-The message is assumed to be complete and valid.
-
-The transport must not mutate the EmailMessage.
-
-Transports are designed for one-shot message delivery.
-They may internally reuse HTTP clients.
-Callers should assume each send_email call is independent.
-Transports do not acquire tokens; callers supply them explicitly.
-
 ## dry_run_transport.py
 
 A no-op transport used for testing, debugging, and previewing sends.
@@ -72,12 +57,6 @@ EmailClient.send() wraps this dispatcher: it builds the EmailMessage via
 EmailMessageBuilder, persists config using the configured KeyPolicy/SecureConfig,
 runs device-code auth for non-dry-run backends, and then calls this send() helper
 with the acquired access token.
-
-## Errors
-
-send_email raises a TransportError (or subclass) if delivery fails.
-Provider-specific exceptions may be wrapped.
-Transports do not retry internally.
 
 ## Limitations
 
