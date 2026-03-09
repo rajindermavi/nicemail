@@ -60,9 +60,9 @@ class MSalDeviceCodeTokenProvider:
         if authority.startswith("http"):
             return authority
         authority_key = authority.lower()
-        if authority_key in ("organizations", "org", "work", "work/school", "work_school"):
+        if authority_key in ("organization"):
             return ORG_AUTHORITY
-        if authority_key in ("consumers", "consumer", "personal", "outlook"):
+        if authority_key in ("consumer"):
             return CONSUMER_AUTHORITY
         return ORG_AUTHORITY
 
