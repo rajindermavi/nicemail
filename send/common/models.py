@@ -47,4 +47,4 @@ class TokenRecord:
 @dataclass(frozen=True)
 class KeyPolicy:
     prefer_keyring: bool = True
-    allow_passphrase_fallback: bool = False
+    allow_passphrase_fallback: bool = True
