@@ -2,11 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-try:
-    from tkinter import messagebox  # GUI popup for device-code instructions
-except Exception:  # pragma: no cover - fallback for non-GUI contexts
-    messagebox = None
-
 import msal
 
 from send.credentials.store import SecureConfig
@@ -193,9 +188,6 @@ class MSalDeviceCodeTokenProvider:
             self._show_message(msg)
             return
         text = msg.get("message") if isinstance(msg, dict) else str(msg)
-        if messagebox:
-            messagebox.showinfo("Microsoft Sign-in", text)
-            return
         print(text, flush=True)
 
     def _extract_username(self, result: dict) -> str | None:

@@ -27,12 +27,15 @@ def main() -> None:
         passphrase=os.getenv("NICEMAIL_PASSPHRASE"),
     )
 
-    print("This will prompt for device code if needed.")
+    def show_device_code(flow: object) -> None:
+        msg = flow.get("message") if isinstance(flow, dict) else str(flow)
+        print(msg, flush=True)
 
     client.send(
         to=recipient,
         subject="Hello from Nicemail",
         body_text="Sent via Microsoft Graph.",
+        show_message=show_device_code,
     )
 
     print("Send complete.")
