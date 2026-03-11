@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, get_args
 import warnings
 
-from send.auth import GoogleDeviceCodeTokenProvider, MSalDeviceCodeTokenProvider
+from send.auth import GoogleLoopbackTokenProvider, MSalDeviceCodeTokenProvider
 from send.common.models import GoogleAPIConfig, KeyPolicy, MSalConfig
 from send.credentials import SecureConfig
 from send.message.builder import EmailMessageBuilder
@@ -95,6 +95,7 @@ class EmailClient:
         google_api_config = GoogleAPIConfig(
             email_address=str(email_address),
             client_id=data.get("client_id"),
+            client_secret=data.get("client_secret"),
             host=str(data.get("host") or GoogleAPIConfig.host),
             port=int(port_value) if port_value is not None else GoogleAPIConfig.port,
             scopes=self._normalize_scopes(data.get("scopes")),
@@ -184,7 +185,7 @@ class EmailClient:
                 if not google_client_secret and isinstance(google_cfg, dict):
                     google_client_secret = google_cfg.get("client_secret")
 
-            provider = GoogleDeviceCodeTokenProvider(
+            provider = GoogleLoopbackTokenProvider(
                 secure_config=self.secure_config,
                 client_id=google_client_id,
                 client_secret=google_client_secret,
@@ -313,6 +314,8 @@ class EmailClient:
             new_data["google_api_config"] = google_dict
             if google_dict.get("client_id"):
                 new_data["google_client_id"] = google_dict["client_id"]
+            if google_dict.get("client_secret"):
+                new_data["google_client_secret"] = google_dict["client_secret"]
             if google_dict.get("email_address"):
                 new_data["google_email_address"] = google_dict["email_address"]
 

@@ -31,6 +31,7 @@ class MSalConfig:
 class GoogleAPIConfig:
     email_address: str
     client_id: str | None = None
+    client_secret: str | None = None
     host: str = "gmail.googleapis.com"
     port: int = 443
     scopes: list[str] | None = None
