@@ -83,7 +83,7 @@ def test_device_code_routes_to_google(monkeypatch, tmp_path):
             captured["scopes"] = scopes
             return "google-token"
 
-    monkeypatch.setattr("send.client.GoogleDeviceCodeTokenProvider", FakeProvider)
+    monkeypatch.setattr("send.client.GoogleLoopbackTokenProvider", FakeProvider)
 
     client = EmailClient(
         google_api_config={
