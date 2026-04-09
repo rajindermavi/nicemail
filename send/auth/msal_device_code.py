@@ -55,9 +55,9 @@ class MSalDeviceCodeTokenProvider:
         if authority.startswith("http"):
             return authority
         authority_key = authority.lower()
-        if authority_key in ("organization"):
+        if authority_key == "organization":
             return ORG_AUTHORITY
-        if authority_key in ("consumer"):
+        if authority_key == "consumer":
             return CONSUMER_AUTHORITY
         return ORG_AUTHORITY
 
@@ -154,7 +154,7 @@ class MSalDeviceCodeTokenProvider:
         #print(account)
         result = self._app.acquire_token_silent(scopes, account=account)
         #print(result)
-        if not result and interactive:
+        if result is None and interactive:
             # Initiate device code flow
             flow = self._app.initiate_device_flow(scopes=scopes)
             if "user_code" not in flow:

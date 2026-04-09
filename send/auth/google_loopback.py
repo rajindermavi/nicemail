@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import secrets
-import socket
 import threading
 import urllib.parse
 import webbrowser
@@ -98,8 +97,6 @@ class GoogleLoopbackTokenProvider:
         return token_data["access_token"]
 
     def _run_loopback_flow(self, scopes: list[str]) -> tuple[str, str]:
-        port = self._find_free_port()
-        redirect_uri = f"http://{REDIRECT_HOST}:{port}"
         state = secrets.token_urlsafe(16)
 
         auth_params = {
@@ -129,7 +126,10 @@ class GoogleLoopbackTokenProvider:
             def log_message(self, format: str, *args: Any) -> None:
                 pass  # suppress request logs
 
-        server = HTTPServer((REDIRECT_HOST, port), _Handler)
+        # Port 0 lets the OS pick a free port atomically — no TOCTOU race.
+        server = HTTPServer((REDIRECT_HOST, 0), _Handler)
+        port = server.server_address[1]
+        redirect_uri = f"http://{REDIRECT_HOST}:{port}"
         server_thread = threading.Thread(target=server.handle_request, daemon=True)
         server_thread.start()
 
@@ -155,7 +155,10 @@ class GoogleLoopbackTokenProvider:
             "grant_type": "authorization_code",
             "redirect_uri": redirect_uri,
         }
-        response = requests.post(TOKEN_URL, data=payload, timeout=10)
+        try:
+            response = requests.post(TOKEN_URL, data=payload, timeout=10)
+        except requests.exceptions.RequestException as exc:
+            raise RuntimeError(f"Network error during Google token exchange: {exc}") from exc
         data = self._safe_json(response)
         if response.status_code != 200 or "access_token" not in data:
             raise RuntimeError(f"Google token exchange failed: {data}")
@@ -168,7 +171,10 @@ class GoogleLoopbackTokenProvider:
             "refresh_token": refresh_token,
             "grant_type": "refresh_token",
         }
-        response = requests.post(TOKEN_URL, data=payload, timeout=10)
+        try:
+            response = requests.post(TOKEN_URL, data=payload, timeout=10)
+        except requests.exceptions.RequestException as exc:
+            raise RuntimeError(f"Network error during Google token refresh: {exc}") from exc
         if response.status_code != 200:
             return None
         data = self._safe_json(response)
@@ -180,11 +186,6 @@ class GoogleLoopbackTokenProvider:
         self._token = finalized
         self._persist_token(finalized)
         return finalized["access_token"]
-
-    def _find_free_port(self) -> int:
-        with socket.socket() as s:
-            s.bind((REDIRECT_HOST, 0))
-            return s.getsockname()[1]
 
     def _display_message(self, auth_url: str) -> None:
         if callable(self._show_message):

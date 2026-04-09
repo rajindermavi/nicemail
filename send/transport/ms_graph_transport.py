@@ -27,12 +27,15 @@ class MSGraphTransport:
         logger.info('Start. Class: MSGraphTransport. Method: send_email.')
         payload = self._emailmessage_to_graph_payload(msg)
 
-        resp = requests.post(
-            self.GRAPH_SENDMAIL_URL,
-            headers=self._headers,
-            json=payload,
-            timeout=30,
-        )
+        try:
+            resp = requests.post(
+                self.GRAPH_SENDMAIL_URL,
+                headers=self._headers,
+                json=payload,
+                timeout=30,
+            )
+        except requests.exceptions.RequestException as exc:
+            raise TransportError(f"Network error sending via Graph API: {exc}") from exc
 
         if resp.status_code not in (200, 202):
             raise TransportError(

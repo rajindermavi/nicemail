@@ -150,7 +150,10 @@ class GoogleDeviceCodeTokenProvider:
 
     def _initiate_device_flow(self, scopes: list[str]) -> dict[str, Any]:
         payload = {"client_id": self.client_id, "scope": " ".join(scopes)}
-        response = requests.post(DEVICE_CODE_URL, data=payload, timeout=10)
+        try:
+            response = requests.post(DEVICE_CODE_URL, data=payload, timeout=10)
+        except requests.exceptions.RequestException as exc:
+            raise RuntimeError(f"Network error initiating Google device flow: {exc}") from exc
         if response.status_code != 200:
             raise RuntimeError(f"Failed to initiate Google device flow: {response.text}")
 
@@ -175,7 +178,11 @@ class GoogleDeviceCodeTokenProvider:
             payload["client_secret"] = self.client_secret
 
         while time.monotonic() < deadline:
-            response = requests.post(TOKEN_URL, data=payload, timeout=10)
+            try:
+                response = requests.post(TOKEN_URL, data=payload, timeout=10)
+            except requests.exceptions.RequestException:
+                time.sleep(interval)
+                continue
             data = self._safe_json(response)
 
             if response.status_code == 200 and "access_token" in data:
@@ -207,7 +214,10 @@ class GoogleDeviceCodeTokenProvider:
         if self.client_secret:
             payload["client_secret"] = self.client_secret
 
-        response = requests.post(TOKEN_URL, data=payload, timeout=10)
+        try:
+            response = requests.post(TOKEN_URL, data=payload, timeout=10)
+        except requests.exceptions.RequestException as exc:
+            raise RuntimeError(f"Network error during Google token refresh: {exc}") from exc
         if response.status_code != 200:
             return None
 

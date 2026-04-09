@@ -36,15 +36,18 @@ class GoogleTransport:
     def send_email(self, msg: EmailMessage) -> None:
         raw_message = base64.urlsafe_b64encode(msg.as_bytes()).decode("ascii")
 
-        resp = requests.post(
-            self._send_url,
-            headers={
-                "Authorization": f"Bearer {self._access_token}",
-                "Content-Type": "application/json",
-            },
-            json={"raw": raw_message},
-            timeout=30,
-        )
+        try:
+            resp = requests.post(
+                self._send_url,
+                headers={
+                    "Authorization": f"Bearer {self._access_token}",
+                    "Content-Type": "application/json",
+                },
+                json={"raw": raw_message},
+                timeout=30,
+            )
+        except requests.exceptions.RequestException as exc:
+            raise TransportError(f"Network error sending via Gmail API: {exc}") from exc
 
         if resp.status_code not in (200, 202):
             raise TransportError(f"Gmail send failed: {resp.status_code} {resp.text}")
