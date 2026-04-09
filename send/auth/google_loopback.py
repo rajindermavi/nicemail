@@ -139,6 +139,12 @@ class GoogleLoopbackTokenProvider:
         server_thread.join(timeout=120)
         server.server_close()
 
+        if server_thread.is_alive():
+            raise RuntimeError(
+                "OAuth loopback flow timed out after 120 seconds. "
+                "The browser window may still be open."
+            )
+
         code = result.get("code")
         if not code:
             raise RuntimeError("No authorization code received. Authorization may have timed out or been denied.")

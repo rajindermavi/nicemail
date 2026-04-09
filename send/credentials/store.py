@@ -245,14 +245,17 @@ class SecureConfig:
                 try:
                     return json.loads(decrypted.decode("utf-8"))
                 except Exception:
+                    self._log(f"WARNING: Config at {cfg_file} decrypted but could not be parsed as JSON; returning empty config.")
                     return {}
 
         fernet = self._ensure_fernet()
         try:
             decrypted = fernet.decrypt(encrypted)
-        except Exception:
-            # If corrupt, return empty (or raise)
-            return {}
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to decrypt config at {cfg_file}. "
+                "The file may be corrupt or encrypted with a different key."
+            ) from exc
 
         self._log(f"Loaded config via Fernet from: {cfg_file}")
         return json.loads(decrypted.decode("utf-8"))

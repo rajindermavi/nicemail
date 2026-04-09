@@ -151,9 +151,7 @@ class MSalDeviceCodeTokenProvider:
         # Try silent first, using account matching the email (if any)
         accounts = self._app.get_accounts()
         account = accounts[0] if accounts else None
-        #print(account)
         result = self._app.acquire_token_silent(scopes, account=account)
-        #print(result)
         if result is None and interactive:
             # Initiate device code flow
             flow = self._app.initiate_device_flow(scopes=scopes)
@@ -166,10 +164,13 @@ class MSalDeviceCodeTokenProvider:
             result = self._app.acquire_token_by_device_flow(flow)
 
         if not result or "access_token" not in result:
-            err = None
-            if isinstance(result, dict):
-                err = result.get("error_description") or result.get("error")
-            raise RuntimeError(f"Could not obtain access token. Details: {err!r}")
+            if result is None:
+                detail = "no token was acquired (interactive=False or empty cache)"
+            elif isinstance(result, dict):
+                detail = result.get("error_description") or result.get("error") or "unknown error"
+            else:
+                detail = repr(result)
+            raise RuntimeError(f"Could not obtain access token. Details: {detail}")
 
         # Capture username from the auth result so we can persist it with the cache.
         username = self._extract_username(result)

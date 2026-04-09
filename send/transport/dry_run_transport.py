@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from email.message import EmailMessage
+from email.utils import getaddresses
 from typing import Iterable
 
 from send.common.logging import get_logger
@@ -94,11 +95,7 @@ class DryRunTransport:
         }
 
     def _get_recipients(self, msg: EmailMessage, header: str) -> list[str]:
-        value = msg.get(header)
-        if not value:
-            return []
-        # Keep this simple; parsing belongs elsewhere
-        return [addr.strip() for addr in value.split(",")]
+        return [addr for _, addr in getaddresses(msg.get_all(header) or []) if addr]
 
     def _iter_attachments(self, msg: EmailMessage) -> Iterable[EmailMessage]:
         for part in msg.walk():
