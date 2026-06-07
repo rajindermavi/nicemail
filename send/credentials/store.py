@@ -19,6 +19,9 @@ from send.runtime.paths import resolve_paths
 KEYRING_SERVICE = APP_NAME
 KEYRING_USERNAME = "config_key"
 
+_DPAPI_MARKER = b"NICEMAIL_DPAPI_V1\n"
+_FERNET_MARKER = b"NICEMAIL_FERNET_V1\n"
+
 class SecureConfig:
     def __init__(
         self,
@@ -236,12 +239,42 @@ class SecureConfig:
         if not cfg_file.exists():
             return {}  # no config yet
 
-        encrypted = cfg_file.read_bytes()
+        raw = cfg_file.read_bytes()
 
+        if raw.startswith(_DPAPI_MARKER):
+            payload = raw[len(_DPAPI_MARKER):]
+            decrypted = self._dpapi_decrypt(payload)
+            if decrypted is None:
+                raise RuntimeError(
+                    f"Failed to decrypt config at {cfg_file}. "
+                    "The file was encrypted with Windows DPAPI but decryption failed. "
+                    "Delete the config file and re-authenticate to create a new one."
+                )
+            self._log(f"Loaded config via DPAPI from: {cfg_file}")
+            try:
+                return json.loads(decrypted.decode("utf-8"))
+            except Exception:
+                self._log(f"WARNING: Config at {cfg_file} decrypted but could not be parsed as JSON; returning empty config.")
+                return {}
+
+        if raw.startswith(_FERNET_MARKER):
+            payload = raw[len(_FERNET_MARKER):]
+            fernet = self._ensure_fernet()
+            try:
+                decrypted = fernet.decrypt(payload)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Failed to decrypt config at {cfg_file}. "
+                    "The file may be corrupt or encrypted with a different key."
+                ) from exc
+            self._log(f"Loaded config via Fernet from: {cfg_file}")
+            return json.loads(decrypted.decode("utf-8"))
+
+        # Legacy file with no marker — try DPAPI first, then Fernet.
         if self._use_dpapi:
-            decrypted = self._dpapi_decrypt(encrypted)
+            decrypted = self._dpapi_decrypt(raw)
             if decrypted is not None:
-                self._log(f"Loaded config via DPAPI from: {cfg_file}")
+                self._log(f"Loaded legacy config via DPAPI from: {cfg_file}")
                 try:
                     return json.loads(decrypted.decode("utf-8"))
                 except Exception:
@@ -250,14 +283,13 @@ class SecureConfig:
 
         fernet = self._ensure_fernet()
         try:
-            decrypted = fernet.decrypt(encrypted)
+            decrypted = fernet.decrypt(raw)
         except Exception as exc:
             raise RuntimeError(
                 f"Failed to decrypt config at {cfg_file}. "
                 "The file may be corrupt or encrypted with a different key."
             ) from exc
-
-        self._log(f"Loaded config via Fernet from: {cfg_file}")
+        self._log(f"Loaded legacy config via Fernet from: {cfg_file}")
         return json.loads(decrypted.decode("utf-8"))
 
     def save(self, config_dict: dict) -> None:
@@ -269,14 +301,14 @@ class SecureConfig:
             encrypted = self._dpapi_encrypt(json_bytes)
             if encrypted is not None:
                 self._log(f"Saving config with DPAPI to: {cfg_file}")
-                cfg_file.write_bytes(encrypted)
+                cfg_file.write_bytes(_DPAPI_MARKER + encrypted)
                 self._announce_encryption_status()
                 return
 
         fernet = self._ensure_fernet()
         encrypted = fernet.encrypt(json_bytes)
         self._log(f"Saving config with Fernet to: {cfg_file}")
-        cfg_file.write_bytes(encrypted)
+        cfg_file.write_bytes(_FERNET_MARKER + encrypted)
         self._announce_encryption_status()
 
     def _announce_encryption_status(self) -> None:
